@@ -1,5 +1,5 @@
-name: Deploy Staging
-
+name: Deploy Staging 
+description: This will deploy to a staging environment and build a fresh seeded database
 on:
   workflow_dispatch:
     inputs:
@@ -16,10 +16,9 @@ on:
         required: true
         default: branch
       server:
-        description:
         type: choice
         required: true
-        description: Select a Staging Server to Deploy to
+        description: Select a Staging Server to Deploy to/n Mochi@8.0
         options:
           - mochi
           - turtle
@@ -28,7 +27,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - if: ${{ github.event.inputs.server == 'gecko }}
-        run: curl ${{ secrets.ENVOYER_GECKO_HOOK }}?${{ github.event.inputs.deploytype }}=${{ github.event.inputs.branch }}
+      - if: ${{ github.event.inputs.server == 'mochi }}
+        run: echo "Its Mochi"
       - if: ${{ github.event.inputs.server == 'turtle }}
         run: curl ${{ secrets.ENVOYER_TURTLE_HOOK }}?${{ github.event.inputs.deploytype }}=${{ github.event.inputs.branch }}
