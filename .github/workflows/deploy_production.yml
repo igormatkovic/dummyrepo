@@ -1,0 +1,9 @@
+name: Deploy Production (master only)
+on: [workflow_dispatch]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    steps:
+      - name: Deploy
+        run: curl ${{ secrets.ENVOYER_PRODUCTION_HOOK }}?branch=master

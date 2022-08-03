@@ -1,0 +1,68 @@
+name: Ghost Inspector
+on: [ pull_request, workflow_dispatch ]
+jobs:
+  ghost-inspector:
+    name: Run Ghost Inspector
+    runs-on: ubuntu-latest
+    container:
+      image: shaneoptimozo/securespace
+      credentials:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    services:
+      mysql:
+        image: bondas83/mysql-native-password
+        env:
+          MYSQL_DATABASE: 'homestead'
+          MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+          MYSQL_USER: 'homestead'
+          MYSQL_PASSWORD: 'secret'
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Prepare the application
+        run: |
+          php -r "file_exists('.env') || copy('.env.pipelines', '.env');"
+          php artisan config:clear
+          php artisan migrate --seed
+          php artisan passport:keys
+          php artisan serve &
+          php artisan queue:work --sleep=3 --tries=3 &
+          php artisan queue:work database-long-running --queue=long-running --timeout=7190 --sleep=3 --tries=2 &
+        env:
+          APP_ENV: testing
+
+      - name: NGROK - INSTALL
+        run: |
+          wget https://bin.equinox.io/c/4VmDzA7iaHb/ngrok-stable-linux-amd64.zip
+          unzip -qq ngrok-stable-linux-amd64.zip
+          ./ngrok authtoken ${{ secrets.NGROK_TOKEN }}
+          curl -sL https://stedolan.github.io/jq/download/linux64/jq > jq && chmod +x jq
+          timeout 15m ./ngrok http 8000 > /dev/null &
+        shell: bash
+      - name: Run Ghost Inspector Tests
+        run: curl -s "https://api.ghostinspector.com/v1/suites/${{ secrets.GI_SUITE }}/execute/?apiKey=${{ secrets.GI_API_KEY }}&domain=$(curl http://localhost:4040/api/tunnels | ./jq -r '.tunnels[] | select(.proto == "https") | .public_url')" > gi.json
+        shell: bash
+      - name: Confirm GI passed or Failed
+        run: |
+          if [ $(grep -c '"optional":false,"passing":false' gi.json) -ne 0 ]; then
+             exit 1;
+          else
+             echo "GI Test Passed";
+          fi

@@ -1,0 +1,20 @@
+name: Static Analysis
+on: [pull_request, workflow_dispatch]
+jobs:
+  static-analysis:
+    name: Run PHPStan
+    runs-on: ubuntu-latest
+    container:
+      image: shaneoptimozo/securespace
+      credentials:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+
+      - name: Execute PHPStan
+        run: vendor/bin/phpstan analyse --memory-limit=2G

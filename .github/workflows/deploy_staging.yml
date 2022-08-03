@@ -1,0 +1,34 @@
+name: Deploy Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch or SHA to deploy'
+        required: true
+        default: 'development'
+      deploytype:
+        type: choice
+        description: 'Type of Deploy'
+        options:
+          - branch
+          - sha
+        required: true
+        default: branch
+      server:
+        description:
+        type: choice
+        required: true
+        description: Select a Staging Server to Deploy to
+        options:
+          - mochi
+          - turtle
+          - monkey
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - if: ${{ github.event.inputs.server == 'gecko }}
+        run: curl ${{ secrets.ENVOYER_GECKO_HOOK }}?${{ github.event.inputs.deploytype }}=${{ github.event.inputs.branch }}
+      - if: ${{ github.event.inputs.server == 'turtle }}
+        run: curl ${{ secrets.ENVOYER_TURTLE_HOOK }}?${{ github.event.inputs.deploytype }}=${{ github.event.inputs.branch }}
