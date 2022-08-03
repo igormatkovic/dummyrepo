@@ -21,16 +21,17 @@ on:
         options:
           - Mochi@8.0
           - Zelda@8.0
-          - Cora@8.1
+          - Benny@8.1
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - if: ${{ github.event.inputs.server == 'Mochi@8.0' }}
-        run: echo "Its Mochi@8.0"
-      - if: ${{ github.event.inputs.server == 'Zelda@8.0' }}
+      - name: Deploying to mochi.insitepg.com (PHP 8.0)
+        if: ${{ github.event.inputs.server == 'Mochi@8.0' }}
+        run: curl ${{ secrets.MOCHI_ENVOYER_HOOK }}?${{ github.event.inputs.deploytype }}=${{ github.event.inputs.branch }}
+      - name: Deploying to zelda.insitepg.com (PHP 8.0)
+        if: ${{ github.event.inputs.server == 'Zelda@8.0' }}
         run: echo "Its Zelda@8.0"
-      - if: ${{ github.event.inputs.server == 'Cora@8.0' }}
-        run: echo "Its Cora@8.0"
-      - if: ${{ github.event.inputs.server == 'Zeldaaaaa@8.0' }}
-        run: curl ${{ secrets.ENVOYER_TURTLE_HOOK }}?${{ github.event.inputs.deploytype }}=${{ github.event.inputs.branch }}
+      - name: Deploying to benny.insitepg.com (PHP 8.10)
+        if: ${{ github.event.inputs.server == 'Benny@8.1' }}
+        run: echo "Its Benny@8.1"
