@@ -1,5 +1,4 @@
-name: Deploy Staging 
-description: This will deploy to a staging environment and build a fresh seeded database
+name: Deploy Staging (Fresh Database Seeded)
 on:
   workflow_dispatch:
     inputs:
